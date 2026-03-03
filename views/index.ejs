@@ -33,13 +33,13 @@
       background: #fff; border-bottom: 1px solid #d0d9ec;
       padding: 0.75rem 2rem; display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap;
     }
-    .filters label { font-size: 0.8rem; font-weight: 600; color: #555; text-transform: uppercase; letter-spacing: 0.05em; }
+    .filters label { font-size: 1rem; font-weight: 600; color: #555; text-transform: uppercase; letter-spacing: 0.05em; }
     .filters select {
-      padding: 0.3rem 0.6rem; border: 1px solid #c0cce0; border-radius: 6px;
-      font-size: 0.85rem; background: #f9fafb; color: #0d1f3c; cursor: pointer;
+      padding: 0.4rem 0.8rem; border: 1px solid #c0cce0; border-radius: 6px;
+      font-size: 1rem; background: #f9fafb; color: #0d1f3c; cursor: pointer;
     }
     .filters select:focus { outline: none; border-color: #0d3580; }
-    .filter-reset { font-size: 0.8rem; color: #0d3580; cursor: pointer; text-decoration: underline; margin-left: auto; }
+    .filter-reset { font-size: 1rem; color: #0d3580; cursor: pointer; text-decoration: underline; margin-left: auto; }
 
     .content { padding: 1.5rem 2rem; max-width: 1000px; margin: 0 auto; }
 
@@ -91,6 +91,7 @@
   <div class="header-actions">
     <% if (isAdmin) { %>
       <a class="btn-primary" href="/games/new">+ New Game</a>
+      <a class="btn-primary" href="/coaches">Coaches</a>
       <form class="inline" method="POST" action="/logout">
         <button class="btn-logout" type="submit">Logout</button>
       </form>
@@ -102,6 +103,24 @@
 
 <div class="filters">
   <label>Filter:</label>
+  <select id="f-coach" onchange="applyFilters()">
+    <option value="">Coaches</option>
+    <% [...new Map(Object.values(coachMap).map(c => [c.name.toLowerCase(), c])).values()].sort((a,b) => a.name.localeCompare(b.name)).forEach(c => { %>
+      <option value="<%= c.name.toLowerCase() %>"><%= c.name %></option>
+    <% }) %>
+  </select>
+  <select id="f-team" onchange="applyFilters()">
+    <option value="">Teams</option>
+    <% [...new Set(games.flatMap(g => [g.home_team, g.away_team]).filter(v => v && v.toUpperCase().includes('PSJ')))].sort().forEach(v => { %>
+      <option value="<%= v %>"><%= v %></option>
+    <% }) %>
+  </select>
+  <select id="f-division" onchange="applyFilters()">
+    <option value="">All Divisions</option>
+    <% [...new Set(games.map(g => g.division).filter(Boolean))].sort().forEach(v => { %>
+      <option><%= v %></option>
+    <% }) %>
+  </select>
   <select id="f-age" onchange="applyFilters()">
     <option value="">All Ages</option>
     <% [...new Set(games.map(g => g.age).filter(Boolean))].sort().forEach(v => { %>
@@ -114,13 +133,11 @@
       <option><%= v %></option>
     <% }) %>
   </select>
-  <select id="f-division" onchange="applyFilters()">
-    <option value="">All Divisions</option>
-    <% [...new Set(games.map(g => g.division).filter(Boolean))].sort().forEach(v => { %>
-      <option><%= v %></option>
-    <% }) %>
+  <select id="f-when" onchange="applyFilters()">
+    <option value="">All Dates</option>
+    <option value="upcoming">Upcoming</option>
+    <option value="past">Past</option>
   </select>
-  <input id="f-team" type="text" placeholder="Search team..." oninput="applyFilters()" style="padding:0.3rem 0.6rem;border:1px solid #d1d5db;border-radius:6px;font-size:0.85rem;background:#f9fafb;color:#1a1a2e;width:160px;">
   <span class="filter-reset" onclick="resetFilters()">Clear</span>
 </div>
 
@@ -141,6 +158,7 @@
       const [h, m] = t.split(':').map(Number);
       return { h: h % 12 || 12, m: String(m).padStart(2,'0'), ampm: h >= 12 ? 'PM' : 'AM' };
     }
+
   %>
 
   <% if (sortedDates.length === 0) { %>
@@ -153,13 +171,19 @@
         <%= new Date(date + 'T12:00:00').toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' }) %>
       </div>
       <% for (const g of byDate[date]) { %>
-        <% const t = fmt12(g.game_time); %>
+        <% const t = fmt12(g.game_time);
+           const homeCoach = coachMap[(g.home_team||'').toLowerCase()];
+           const awayCoach = coachMap[(g.away_team||'').toLowerCase()];
+        %>
         <div class="game-card"
              data-age="<%= g.age %>"
              data-gender="<%= g.gender %>"
              data-division="<%= g.division %>"
              data-home="<%= (g.home_team||'').toLowerCase() %>"
-             data-away="<%= (g.away_team||'').toLowerCase() %>">
+             data-away="<%= (g.away_team||'').toLowerCase() %>"
+             data-home-coach="<%= homeCoach ? homeCoach.name.toLowerCase() : '' %>"
+             data-away-coach="<%= awayCoach ? awayCoach.name.toLowerCase() : '' %>"
+             data-date="<%= g.game_date instanceof Date ? g.game_date.toISOString().slice(0,10) : String(g.game_date).slice(0,10) %>">
           <div class="game-time">
             <%= t.h %>:<%= t.m %><br><span class="ampm"><%= t.ampm %></span>
           </div>
@@ -167,6 +191,21 @@
             <div class="teams">
               <%= g.home_team %> <span class="vs">vs</span> <%= g.away_team %>
             </div>
+            <% if (homeCoach || awayCoach) { %>
+            <div style="font-size:0.9rem;color:#222;font-weight:600;margin-top:0.2rem;display:flex;align-items:center;gap:0.5rem;flex-wrap:wrap;">
+              <% if (homeCoach) { %>
+                <span>Coach: <%= homeCoach.name %>
+                  <% if (isAdmin) { %><a href="/coaches/<%= homeCoach.id %>/edit" style="font-size:0.7rem;color:#0d3580;text-decoration:none;margin-left:0.25rem;opacity:0.6;" title="Edit coach">&#9998;</a><% } %>
+                </span>
+              <% } %>
+              <% if (homeCoach && awayCoach) { %><span>&middot;</span><% } %>
+              <% if (awayCoach) { %>
+                <span>Coach: <%= awayCoach.name %>
+                  <% if (isAdmin) { %><a href="/coaches/<%= awayCoach.id %>/edit" style="font-size:0.7rem;color:#0d3580;text-decoration:none;margin-left:0.25rem;opacity:0.6;" title="Edit coach">&#9998;</a><% } %>
+                </span>
+              <% } %>
+            </div>
+            <% } %>
             <div class="game-meta">
               <% if (g.location)  { %><span class="badge location"><%= g.location %></span><% } %>
               <% if (g.age)       { %><span class="badge"><%= g.age %></span><% } %>
@@ -194,14 +233,20 @@
     const age      = document.getElementById('f-age').value;
     const gender   = document.getElementById('f-gender').value;
     const division = document.getElementById('f-division').value;
-    const team     = document.getElementById('f-team').value.toLowerCase().trim();
+    const team     = document.getElementById('f-team').value;
+    const coach    = document.getElementById('f-coach').value;
+    const when     = document.getElementById('f-when').value;
+    const today    = new Date().toISOString().slice(0, 10);
 
     document.querySelectorAll('.game-card').forEach(card => {
+      const cardDate = card.dataset.date;
       const match =
         (!age      || card.dataset.age      === age)      &&
         (!gender   || card.dataset.gender   === gender)   &&
         (!division || card.dataset.division === division) &&
-        (!team     || card.dataset.home.includes(team) || card.dataset.away.includes(team));
+        (!team     || card.dataset.home === team.toLowerCase() || card.dataset.away === team.toLowerCase()) &&
+        (!coach    || card.dataset.homeCoach === coach || card.dataset.awayCoach === coach) &&
+        (!when     || (when === 'upcoming' ? cardDate >= today : cardDate < today));
       card.style.display = match ? '' : 'none';
     });
 
@@ -212,7 +257,7 @@
   }
 
   function resetFilters() {
-    ['f-age','f-gender','f-division'].forEach(id => document.getElementById(id).value = '');
+    ['f-age','f-gender','f-division','f-team','f-coach','f-when'].forEach(id => document.getElementById(id).value = '');
     document.getElementById('f-team').value = '';
     applyFilters();
   }

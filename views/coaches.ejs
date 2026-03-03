@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Coaches – PSJ Soccer</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: system-ui, sans-serif; background: #f0f4fa; color: #0d1f3c; min-height: 100vh; }
+    .header {
+      background: #0d3580; color: #fff;
+      padding: 1.2rem 2rem; display: flex; align-items: center; gap: 1rem;
+    }
+    .header h1 { font-size: 1.5rem; font-weight: 700; }
+    .header h1 span { color: #f5c400; }
+    .header-actions { margin-left: auto; display: flex; gap: 0.6rem; align-items: center; }
+    .btn-primary {
+      padding: 0.4rem 0.9rem; background: #f5c400; color: #0d3580;
+      text-decoration: none; border-radius: 6px; font-size: 0.82rem; font-weight: 700;
+    }
+    .btn-primary:hover { background: #ffd633; }
+    .btn-back {
+      padding: 0.4rem 0.9rem; background: rgba(255,255,255,0.15); color: #fff;
+      text-decoration: none; border: 1px solid rgba(255,255,255,0.3); border-radius: 6px; font-size: 0.82rem;
+    }
+    .btn-back:hover { background: rgba(255,255,255,0.25); }
+    .content { padding: 1.5rem 2rem; max-width: 700px; margin: 0 auto; }
+    .coach-card {
+      background: #fff; border: 1px solid #d0d9ec; border-radius: 10px;
+      padding: 0.85rem 1.1rem; margin-bottom: 0.6rem;
+      display: flex; align-items: center; gap: 1rem;
+    }
+    .coach-name { font-weight: 700; font-size: 1rem; flex: 1; }
+    .coach-team { font-size: 0.85rem; color: #555; flex: 2; }
+    .actions { display: flex; gap: 0.4rem; }
+    .btn-edit {
+      padding: 0.3rem 0.65rem; background: #e6ecf8; color: #0d3580;
+      text-decoration: none; border-radius: 5px; font-size: 0.78rem; font-weight: 600;
+    }
+    .btn-edit:hover { background: #c5d3f0; }
+    .btn-del {
+      padding: 0.3rem 0.65rem; background: #fee2e2; color: #b91c1c;
+      border: none; border-radius: 5px; font-size: 0.78rem; font-weight: 600; cursor: pointer;
+    }
+    .btn-del:hover { background: #fca5a5; }
+    form.inline { display: inline; }
+    .empty { text-align: center; color: #999; padding: 3rem 0; font-size: 0.95rem; }
+    .section-heading {
+      font-size: 0.78rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em;
+      color: #0d3580; border-bottom: 2px solid #f5c400; padding-bottom: 0.35rem; margin-bottom: 0.75rem;
+    }
+  </style>
+</head>
+<body>
+<div class="header">
+  <h1>PSJ <span>Coaches</span></h1>
+  <div class="header-actions">
+    <a class="btn-primary" href="/coaches/new">+ Add Coach</a>
+    <a class="btn-back" href="/">Schedule</a>
+  </div>
+</div>
+<div class="content">
+  <div class="section-heading">All Coaches</div>
+  <% if (coaches.length === 0) { %>
+    <div class="empty">No coaches added yet.</div>
+  <% } %>
+  <% for (const c of coaches) { %>
+    <div class="coach-card">
+      <div class="coach-name"><%= c.coach_name %></div>
+      <div class="coach-team"><%= c.team_name %></div>
+      <div class="actions">
+        <a class="btn-edit" href="/coaches/<%= c.id %>/edit">Edit</a>
+        <form class="inline" method="POST" action="/coaches/<%= c.id %>/delete"
+              onsubmit="return confirm('Remove this coach?')">
+          <button class="btn-del" type="submit">Delete</button>
+        </form>
+      </div>
+    </div>
+  <% } %>
+</div>
+</body>
+</html>
