@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title><%= game ? "Edit Game" : "New Game" %></title>
+  <style>
+    body { font-family: sans-serif; padding: 1rem 2rem; max-width: 500px; }
+    label { display: block; margin-top: 0.75rem; font-size: 0.9rem; font-weight: bold; }
+    input { width: 100%; padding: 6px; margin-top: 4px; box-sizing: border-box; font-size: 0.9rem; border: 1px solid #ccc; border-radius: 4px; }
+    button { margin-top: 1rem; padding: 8px 16px; background: #0070f3; color: #fff; border: none; border-radius: 4px; cursor: pointer; font-size: 0.9rem; }
+    button:hover { background: #005bb5; }
+    a { display: inline-block; margin-top: 0.75rem; font-size: 0.85rem; }
+  </style>
+</head>
+<body>
+  <h1><%= game ? "Edit Game" : "New Game" %></h1>
+  <form method="POST" action="<%= action %>">
+    <label>Date
+      <input type="date" name="game_date"
+             value="<%= game?.game_date?.toISOString?.().slice(0,10) ?? game?.game_date ?? '' %>" required>
+    </label>
+    <label>Time
+      <input type="text" name="game_time" placeholder="e.g. 10:00:00"
+             value="<%= game?.game_time ?? '' %>">
+    </label>
+    <label>Location
+      <input type="text" name="location" value="<%= game?.location ?? '' %>">
+    </label>
+    <label>Age
+      <input type="text" name="age" value="<%= game?.age ?? '' %>">
+    </label>
+    <label>Gender
+      <input type="text" name="gender" value="<%= game?.gender ?? '' %>">
+    </label>
+    <label>Division
+      <input type="text" name="division" value="<%= game?.division ?? '' %>">
+    </label>
+    <label>Home Team
+      <input type="text" name="home_team" value="<%= game?.home_team ?? '' %>">
+    </label>
+    <label>Away Team
+      <input type="text" name="away_team" value="<%= game?.away_team ?? '' %>">
+    </label>
+    <button type="submit"><%= game ? "Save Changes" : "Create Game" %></button>
+  </form>
+  <a href="/">Back to schedule</a>
+</body>
+</html>

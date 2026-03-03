@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Soccer Schedule</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: system-ui, sans-serif; background: #f0f4fa; color: #0d1f3c; min-height: 100vh; }
+
+    .header {
+      background: #0d3580; color: #fff;
+      padding: 1.2rem 2rem; display: flex; align-items: center; gap: 1rem;
+    }
+    .header h1 { font-size: 1.5rem; font-weight: 700; letter-spacing: -0.5px; }
+    .header h1 span { color: #f5c400; }
+    .header-actions { margin-left: auto; display: flex; gap: 0.6rem; align-items: center; }
+    .btn-primary {
+      padding: 0.4rem 0.9rem; background: #f5c400; color: #0d3580;
+      text-decoration: none; border-radius: 6px; font-size: 0.82rem; font-weight: 700;
+    }
+    .btn-primary:hover { background: #ffd633; }
+    .btn-logout {
+      padding: 0.4rem 0.9rem; background: rgba(255,255,255,0.15); color: #fff;
+      border: 1px solid rgba(255,255,255,0.3); border-radius: 6px; font-size: 0.82rem;
+      cursor: pointer; font-weight: 500;
+    }
+    .btn-logout:hover { background: rgba(255,255,255,0.25); }
+    .login-icon { font-size: 1.3rem; text-decoration: none; opacity: 0.5; transition: opacity 0.2s; }
+    .login-icon:hover { opacity: 0.9; }
+
+    .filters {
+      background: #fff; border-bottom: 1px solid #d0d9ec;
+      padding: 0.75rem 2rem; display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap;
+    }
+    .filters label { font-size: 0.8rem; font-weight: 600; color: #555; text-transform: uppercase; letter-spacing: 0.05em; }
+    .filters select {
+      padding: 0.3rem 0.6rem; border: 1px solid #c0cce0; border-radius: 6px;
+      font-size: 0.85rem; background: #f9fafb; color: #0d1f3c; cursor: pointer;
+    }
+    .filters select:focus { outline: none; border-color: #0d3580; }
+    .filter-reset { font-size: 0.8rem; color: #0d3580; cursor: pointer; text-decoration: underline; margin-left: auto; }
+
+    .content { padding: 1.5rem 2rem; max-width: 1000px; margin: 0 auto; }
+
+    .date-group { margin-bottom: 2rem; }
+    .date-heading {
+      font-size: 0.78rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em;
+      color: #0d3580; border-bottom: 2px solid #f5c400; padding-bottom: 0.35rem; margin-bottom: 0.75rem;
+    }
+
+    .game-card {
+      background: #fff; border: 1px solid #d0d9ec; border-radius: 10px;
+      padding: 0.9rem 1.1rem; margin-bottom: 0.6rem;
+      display: grid; grid-template-columns: 70px 1fr auto;
+      align-items: center; gap: 1rem; transition: box-shadow 0.15s;
+    }
+    .game-card:hover { box-shadow: 0 2px 10px rgba(13,53,128,0.1); }
+    .game-time { font-size: 1.05rem; font-weight: 700; color: #0d3580; white-space: nowrap; }
+    .game-time .ampm { font-size: 0.7rem; font-weight: 500; color: #777; }
+
+    .game-match { display: flex; flex-direction: column; gap: 0.25rem; }
+    .teams { display: flex; align-items: center; gap: 0.6rem; font-size: 1rem; font-weight: 600; }
+    .teams .vs { font-size: 0.75rem; color: #aaa; font-weight: 400; }
+    .game-meta { display: flex; gap: 0.4rem; flex-wrap: wrap; }
+    .badge {
+      font-size: 0.7rem; padding: 0.15rem 0.5rem; border-radius: 999px;
+      font-weight: 600; background: #e6ecf8; color: #0d3580;
+    }
+    .badge.location { background: #fff8d6; color: #7a5c00; }
+
+    .game-actions { display: flex; gap: 0.4rem; }
+    .btn-edit {
+      padding: 0.3rem 0.65rem; background: #e6ecf8; color: #0d3580;
+      text-decoration: none; border-radius: 5px; font-size: 0.78rem; font-weight: 600; white-space: nowrap;
+    }
+    .btn-edit:hover { background: #c5d3f0; }
+    .btn-del {
+      padding: 0.3rem 0.65rem; background: #fee2e2; color: #b91c1c;
+      border: none; border-radius: 5px; font-size: 0.78rem; font-weight: 600; cursor: pointer; white-space: nowrap;
+    }
+    .btn-del:hover { background: #fca5a5; }
+    form.inline { display: inline; }
+    .empty { text-align: center; color: #999; padding: 3rem 0; font-size: 0.95rem; }
+  </style>
+</head>
+<body>
+
+<div class="header">
+  <h1>PSJ <span>Soccer Schedule</span></h1>
+  <div class="header-actions">
+    <% if (isAdmin) { %>
+      <a class="btn-primary" href="/games/new">+ New Game</a>
+      <form class="inline" method="POST" action="/logout">
+        <button class="btn-logout" type="submit">Logout</button>
+      </form>
+    <% } else { %>
+      <a class="login-icon" href="/login" title="Admin Login">&#128274;</a>
+    <% } %>
+  </div>
+</div>
+
+<div class="filters">
+  <label>Filter:</label>
+  <select id="f-age" onchange="applyFilters()">
+    <option value="">All Ages</option>
+    <% [...new Set(games.map(g => g.age).filter(Boolean))].sort().forEach(v => { %>
+      <option><%= v %></option>
+    <% }) %>
+  </select>
+  <select id="f-gender" onchange="applyFilters()">
+    <option value="">All Genders</option>
+    <% [...new Set(games.map(g => g.gender).filter(Boolean))].sort().forEach(v => { %>
+      <option><%= v %></option>
+    <% }) %>
+  </select>
+  <select id="f-division" onchange="applyFilters()">
+    <option value="">All Divisions</option>
+    <% [...new Set(games.map(g => g.division).filter(Boolean))].sort().forEach(v => { %>
+      <option><%= v %></option>
+    <% }) %>
+  </select>
+  <input id="f-team" type="text" placeholder="Search team..." oninput="applyFilters()" style="padding:0.3rem 0.6rem;border:1px solid #d1d5db;border-radius:6px;font-size:0.85rem;background:#f9fafb;color:#1a1a2e;width:160px;">
+  <span class="filter-reset" onclick="resetFilters()">Clear</span>
+</div>
+
+<div class="content">
+  <%
+    const byDate = {};
+    for (const g of games) {
+      const key = g.game_date instanceof Date
+        ? g.game_date.toISOString().slice(0,10)
+        : String(g.game_date).slice(0,10);
+      if (!byDate[key]) byDate[key] = [];
+      byDate[key].push(g);
+    }
+    const sortedDates = Object.keys(byDate).sort();
+
+    function fmt12(t) {
+      if (!t) return { h: '', m: '', ampm: '' };
+      const [h, m] = t.split(':').map(Number);
+      return { h: h % 12 || 12, m: String(m).padStart(2,'0'), ampm: h >= 12 ? 'PM' : 'AM' };
+    }
+  %>
+
+  <% if (sortedDates.length === 0) { %>
+    <div class="empty">No games scheduled.</div>
+  <% } %>
+
+  <% for (const date of sortedDates) { %>
+    <div class="date-group" data-date="<%= date %>">
+      <div class="date-heading">
+        <%= new Date(date + 'T12:00:00').toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' }) %>
+      </div>
+      <% for (const g of byDate[date]) { %>
+        <% const t = fmt12(g.game_time); %>
+        <div class="game-card"
+             data-age="<%= g.age %>"
+             data-gender="<%= g.gender %>"
+             data-division="<%= g.division %>"
+             data-home="<%= (g.home_team||'').toLowerCase() %>"
+             data-away="<%= (g.away_team||'').toLowerCase() %>">
+          <div class="game-time">
+            <%= t.h %>:<%= t.m %><br><span class="ampm"><%= t.ampm %></span>
+          </div>
+          <div class="game-match">
+            <div class="teams">
+              <%= g.home_team %> <span class="vs">vs</span> <%= g.away_team %>
+            </div>
+            <div class="game-meta">
+              <% if (g.location)  { %><span class="badge location"><%= g.location %></span><% } %>
+              <% if (g.age)       { %><span class="badge"><%= g.age %></span><% } %>
+              <% if (g.gender)    { %><span class="badge"><%= g.gender %></span><% } %>
+              <% if (g.division)  { %><span class="badge"><%= g.division %></span><% } %>
+            </div>
+          </div>
+          <% if (isAdmin) { %>
+          <div class="game-actions">
+            <a class="btn-edit" href="/games/<%= g.id %>/edit">Edit</a>
+            <form class="inline" method="POST" action="/games/<%= g.id %>/delete"
+                  onsubmit="return confirm('Delete this game?')">
+              <button class="btn-del" type="submit">Delete</button>
+            </form>
+          </div>
+          <% } %>
+        </div>
+      <% } %>
+    </div>
+  <% } %>
+</div>
+
+<script>
+  function applyFilters() {
+    const age      = document.getElementById('f-age').value;
+    const gender   = document.getElementById('f-gender').value;
+    const division = document.getElementById('f-division').value;
+    const team     = document.getElementById('f-team').value.toLowerCase().trim();
+
+    document.querySelectorAll('.game-card').forEach(card => {
+      const match =
+        (!age      || card.dataset.age      === age)      &&
+        (!gender   || card.dataset.gender   === gender)   &&
+        (!division || card.dataset.division === division) &&
+        (!team     || card.dataset.home.includes(team) || card.dataset.away.includes(team));
+      card.style.display = match ? '' : 'none';
+    });
+
+    document.querySelectorAll('.date-group').forEach(group => {
+      const visible = [...group.querySelectorAll('.game-card')].some(c => c.style.display !== 'none');
+      group.style.display = visible ? '' : 'none';
+    });
+  }
+
+  function resetFilters() {
+    ['f-age','f-gender','f-division'].forEach(id => document.getElementById(id).value = '');
+    document.getElementById('f-team').value = '';
+    applyFilters();
+  }
+</script>
+</body>
+</html>

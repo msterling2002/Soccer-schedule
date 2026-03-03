@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Admin Login</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: sans-serif;
+      background: #f0f2f5;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .card {
+      background: #fff;
+      border-radius: 8px;
+      box-shadow: 0 2px 16px rgba(0,0,0,0.10);
+      padding: 2.5rem 2rem;
+      width: 100%;
+      max-width: 360px;
+    }
+    h1 {
+      font-size: 1.4rem;
+      font-weight: 600;
+      margin-bottom: 1.75rem;
+      color: #111;
+    }
+    label {
+      display: block;
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: #444;
+      margin-bottom: 0.3rem;
+    }
+    input {
+      width: 100%;
+      padding: 9px 12px;
+      border: 1px solid #d0d0d0;
+      border-radius: 5px;
+      font-size: 0.95rem;
+      margin-bottom: 1.1rem;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+    input:focus { border-color: #0070f3; }
+    button {
+      width: 100%;
+      padding: 10px;
+      background: #0070f3;
+      color: #fff;
+      border: none;
+      border-radius: 5px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      margin-top: 0.25rem;
+      transition: background 0.15s;
+    }
+    button:hover { background: #005bb5; }
+    .error {
+      color: #c00;
+      font-size: 0.85rem;
+      margin-bottom: 1rem;
+    }
+    .back {
+      display: block;
+      text-align: center;
+      margin-top: 1.25rem;
+      font-size: 0.83rem;
+      color: #666;
+      text-decoration: none;
+    }
+    .back:hover { color: #0070f3; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>Admin Login</h1>
+    <form method="POST" action="/login">
+      <label for="username">Username</label>
+      <input type="text" id="username" name="username" required autofocus>
+      <label for="password">Password</label>
+      <input type="password" id="password" name="password" required>
+      <% if (error) { %>
+        <div class="error"><%= error %></div>
+      <% } %>
+      <button type="submit">Login</button>
+    </form>
+    <a class="back" href="/">Back to schedule</a>
+  </div>
+</body>
+</html>
