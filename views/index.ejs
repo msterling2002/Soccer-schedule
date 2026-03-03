@@ -152,6 +152,13 @@
       byDate[key].push(g);
     }
     const sortedDates = Object.keys(byDate).sort();
+    for (const key of sortedDates) {
+      byDate[key].sort((a, b) => {
+        const [ah, am] = (a.game_time || '0:0').split(':').map(Number);
+        const [bh, bm] = (b.game_time || '0:0').split(':').map(Number);
+        return (ah * 60 + am) - (bh * 60 + bm);
+      });
+    }
 
     function fmt12(t) {
       if (!t) return { h: '', m: '', ampm: '' };
